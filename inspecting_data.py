@@ -33,4 +33,4 @@ df = pd.read_csv ('..\git\python_pandas\sample_data\\02 Introduction to Pandas\i
 #print(df[['Open','Close']].head(50))
 
 #avg, min, max, %25tile
-print(df.describe())
+# print(df.describe())
