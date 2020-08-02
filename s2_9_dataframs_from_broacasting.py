@@ -1,0 +1,14 @@
+import pandas as pd
+
+cities = ['Birmingham','Florence','Huntsville','Mobile','Montgomery','Chandler','Gilbert','Mesa','Phoenix','Scottsdale','Surprise','Tucson','Alhambra','Alpine','Auburn','Baldwin Park','Barstow','Bell Gardens','Bellflower','Berkeley','Beverly Hills','Burbank','Burlingame','Camarillo','Canoga Park','Carson','Cerritos','Chula Vista','Citrus Heights','City Of Commerce','Colma','Concord','Coronado','Culver City','Daly City','Downey','El Cajon','El Segundo','Elk Grove','Escondido','Eureka','Fontana','Fremont','Fullerton','Gilroy','Glendale','Grossmont','Hanford','Hayward','Imperial Beach','Irvine','La Jolla','La Mesa','Lake Elsinore','Lakewood','Lemon Grove','Lincoln Acres','Long Beach','Los Angeles','Mill Valley','Milpitas','Modesto','Monrovia','National City','Newark','Newport Beach','Norwalk','Novato','Oakland','Ontario','Orange','Oxnard','Palo Alto','Pleasanton','Redlands','Redwood City','Sacramento','San Bruno','San Carlos','San Diego','San Francisco','San Gabriel','San Jose','San Mateo','San Ramon','San Ysidro','Sand City','Santa Ana','Santa Cruz','Santa Monica','Sherman Oaks','Simi Valley','Spring Valley','Stockton','Torrance','Trabuco Canyon','Union City','Upland','Vacaville','Van Nuys','Visalia','Vista','Walnut Creek','West Covina','Whittier','Woodland Hills','Denver','Englewood','Greeley','Longmont','Loveland','Parker','Westminster','East Haven','Farmington','Hamden','Milford','New Haven','Stamford','Waterbury','Westport','Altamonte Springs','Bradenton','Clearwater','Destin','Hollywood','Kendall','Lakeland','Merritt Island','Miami','North Miami Beach','Orlando','Sarasota','Sunrise','Tampa','Vero Beach','Atlanta','Augusta','Austell','Byron','Clarkston','Columbus','Decatur','La Grange','Marietta','Mcdonough','Savannah','Suwanee','Idaho Falls','Lewiston','Sandpoint','Carol Stream','Chicago','Elgin','Joliet','Moline','Norridge','Peoria','Tuscola','West Chicago','Wood Dale','Daleville','Fort Wayne','Indianapolis','Logansport','Michigan City','New Castle','South Bend','Campbellsville','Florence','Newport','Saint Matthews','Somerset','Braintree','Norwood','Randolph','Saugus','Wrentham','Baltimore','Kittery','Detroit','Holland','Howell','Madison Heights','Midland','Monroe','Novi','Pontiac','Port Huron','Redford','Saginaw','Southfield','Southgate','Westland','Zeeland','Branch','Duluth','Edina','Medford','Minneapolis','Woodbury','Branson','Ferguson','Jefferson City','Kansas City','Odessa','Saint Ann','Saint Louis','Biloxi','Gulfport','Tupelo','Billings','Great Falls','Missoula','Charlotte','Greensboro','Kannapolis','Raleigh','Rocky Mount','Smithfield','Winston-Salem']
+
+#create string with value = 'USA'
+country = "USA"
+
+#create dictionary - Assign the LIST of VALUES to the KEY
+#        KEY       VALUE     KEY   VALUE
+usa = {'Country':country, 'City':cities}
+#print(usa)
+#create datafams from the dictionay
+df = pd.DataFrame(usa)
+print(df)
