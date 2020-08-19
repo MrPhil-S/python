@@ -13,7 +13,6 @@ new_columns = ['Quantity','UnitPrice']
 #print(weekly_max)
 
 #2 week avg
-
 #TwoWeekly_mean = sales_data.resample('2W').mean()[new_columns]
 #print(TwoWeekly_mean)
 

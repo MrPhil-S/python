@@ -25,7 +25,8 @@ print('----------')
 #(first col is end of month)
 
 #investigate NaN - ensure ther are no sales (only selecting specific columns)
-print(monthly_mean.loc['2010-03-31'])
+#.loc - select data ny row /column
+#print(monthly_mean.loc['2010-03-31'])
 #print(monthly_mean.loc['2010-01-31','Quantity'])
 
 
