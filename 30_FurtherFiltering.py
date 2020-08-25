@@ -13,11 +13,13 @@ sales_data = pd.read_csv('..\\git\\python_pandas\\sample_data\\04 Time Series\\s
 #2010-12-01 08:26:00    536365    84029E       RED WOOLLY HOTTIE WHITE HEART.  ...       3.39       17850  United Kingdom
 
 #search only 1 column for partial string that containes something
-search = sales_data['Description'].str.contains('POPPY')
+search = sales_data['Description'].str.contains('WHITE')
 
 #prints boolean True/False for ea column
 #print(search)
 
-total_poppy_sales = search.resample('H').sum()
+#print only the rows that match
+#print(sales_data[search])
 
-print(total_poppy_sales)
+#total_poppy_sales = search.resample('H').sum()
+#print(total_poppy_sales)

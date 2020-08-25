@@ -5,7 +5,7 @@ stock_prices = pd.read_csv('..\git\python_pandas\sample_data\\03 Data Analysis\i
 
 #investigate file
 #print(stock_prices.info())
-#print(stock_prices)
+print(stock_prices)
 
 #y columns
 y_columns = ['intel','amd']
