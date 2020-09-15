@@ -31,5 +31,18 @@ htmlText = response.text
 #example = "AbBdDbe"
 #print(example.split("b"))
 
-splitlist = htmlText.split("Previous Close")
+#create a list
+splitlist = htmlText.split("1y Target Est")
 print(len(splitlist))
+
+#parse the split
+#we know that the elemement we want is the 2nd item in the splitlist
+#print(splitlist[1]) --too long
+
+#get the first [0:n] characters
+#print(splitlist[1][0:1000]), get the [2] elemement occurance
+#print(splitlist[1][0:1000].split("\">")[2])
+leadingsplit = splitlist[1][0:1000].split("\">")[2]
+trailingsplit = leadingsplit.split("</span>")
+data = trailingsplit[0]
+print(data)
