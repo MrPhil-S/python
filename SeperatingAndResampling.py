@@ -4,7 +4,7 @@ sales_data = pd.read_csv('..\\git\\python_pandas\\sample_data\\04 Time Series\\s
 
 print(sales_data.columns)
 
-
+#get the Quantity column for the specific date
 morning_sales = sales_data['Quantity']['2010-12-01']
 #print(morning_sales)
 ##downsample
