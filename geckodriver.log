@@ -450,12 +450,10 @@ JavaScript error: resource://gre/actors/AutoCompleteChild.jsm, line 208: Error: 
 console.error: (new TypeError("container.node.targetFront is null", "resource://devtools/client/inspector/markup/markup.js", 2271))
 console.error: (new TypeError("container.node.targetFront is null", "resource://devtools/client/inspector/markup/markup.js", 2271))
 JavaScript error: https://s.yimg.com/uc/finance/dd-site/js/vendor.5389555463e17e4d1864.min.js, line 2: Error: [object ProgressEvent]
- SearchCache: "_readCacheFile: Error reading cache file:" (new Error("", "(unknown module)"))
-1601353146770	Marionette	INFO	Listening on port 61112
-1601353146841	Marionette	WARN	TLS certificate errors will be ignored for this session
-1601353718674	Marionette	INFO	Stopped listening on port 61112
-
-###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv
+JavaScript error: , line 0: NS_ERROR_NOT_AVAILABLE
+JavaScript error: https://s.yimg.com/uc/finance/dd-site/js/vendor.5389555463e17e4d1864.min.js, line 2: Error: [object ProgressEvent]
+JavaScript error: https://s.yimg.com/uc/finance/dd-site/js/vendor.5389555463e17e4d1864.min.js, line 2: Error: [object ProgressEvent]
+sageChannel::SendAndWait] Error: Channel error: cannot send/recv
 
 firefox.exe" "--marionette" "-foreground" "-no-remote" "-profile" "C:\\Users\\PHILLY~1\\AppData\\Local\\Temp\\rust_mozprofileo3kdZL"
 JavaScript error: resource://gre/modules/XULStore.jsm, line 66: Error: Can't find profile directory.
@@ -560,7 +558,8 @@ JavaScript error: resource://gre/modules/XULStore.jsm, line 66: Error: Can't fin
 console.error: SearchCache: "_readCacheFile: Error reading cache file:" (new Error("", "(unknown module)"))
 1601355639971	Marionette	INFO	Listening on port 51527
 1601355640155	Marionette	WARN	TLS certificate errors will be ignored for this session
-1601355728505	geckodriver	INFO	Listening on 127.0.0.1:51786
+JavaScript error: , line 0: NS_ERROR_NOT_AVAILABLE
+1:51786
 1601355731528	mozrunner::runner	INFO	Running command: "C:\\Program Files\\Mozilla Firefox\\firefox.exe" "--marionette" "-foreground" "-no-remote" "-profile" "C:\\Users\\PHILLY~1\\AppData\\Local\\Temp\\rust_mozprofilehazfsT"
 JavaScript error: resource://gre/modules/XULStore.jsm, line 66: Error: Can't find profile directory.
 console.error: SearchCache: "_readCacheFile: Error reading cache file:" (new Error("", "(unknown module)"))
