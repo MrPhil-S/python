@@ -1,4 +1,4 @@
-print (f"First module's name: {__name__}")
+#print (f"First module's name: {__name__}")
 
 #__name__ is a predefined variable when python runs
 
