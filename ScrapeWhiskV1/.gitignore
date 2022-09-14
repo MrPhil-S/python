@@ -1,2 +1,3 @@
 scrapeWhiskv1Venv/
 geckodriver*
+geckodriver.log
