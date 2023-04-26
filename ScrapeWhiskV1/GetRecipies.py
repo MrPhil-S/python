@@ -24,7 +24,9 @@ cursor.execute('''CREATE TABLE recipe (
       whisk_url TEXT,
       source_url TEXT,
       ingredient_count INT, 
-      total_time TEXT)''')
+      total_time TEXT,
+      prep_time TEXT,
+      cook_time TEXT)''')
 
 # query the database
 cursor.execute('SELECT * FROM recipe')
@@ -77,14 +79,14 @@ while x > 1:
 print(f'{x} seconds left, continuing...')
 
 #scroll to bottom of cards
-#last_height = driver.execute_script("return document.body.scrollHeight")
-#while True:
-#    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-#    sleep(2)
-#    new_height = driver.execute_script("return document.body.scrollHeight")
-#    if new_height == last_height:
-#        break
-#    last_height = new_height
+last_height = driver.execute_script("return document.body.scrollHeight")
+while True:
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    sleep(2)
+    new_height = driver.execute_script("return document.body.scrollHeight")
+    if new_height == last_height:
+        break
+    last_height = new_height
 
 #get Whisk recipe page URLs
 card_urls = []
@@ -128,7 +130,7 @@ conn.commit()
 total_recipes = len(card_urls)
 print(f'{total_recipes} URLs found ')
 #TESTING - limite the amount
-card_urls = card_urls[:30]
+#card_urls = card_urls[:30]
 
 #for each Whisk page, navigate within and get the souce URL
 source_url_count = 0
@@ -145,46 +147,27 @@ for whisk_url in card_urls:
       #some recipes do not have an extranal URL. If so, this will return the current URL
       if source_url.startswith('https://my.whisk.com/profile/'):
         source_url = driver.current_url
-      print(f'UPDATE recipe SET source_url = {source_url} WHERE whisk_url = {whisk_url}')
       conn.execute('''UPDATE recipe SET source_url = ? WHERE whisk_url = ?''', (source_url, whisk_url))
       conn.commit()
 
       source_urls.append(source_url)
 
     source_url_count += 1
-    print(f'Remaining source urls obtained: {total_recipes - source_url_count} of {total_recipes}, ({int((source_url_count/total_recipes)*100)}%)')
+    print(f'{int((source_url_count/total_recipes)*100)}% complete. (Remaining source urls obtained: {total_recipes - source_url_count} of {total_recipes}))')
   else:
     source_urls.append("Not Found")
    
-
-  #times = driver.find_elements(By.XPATH, '//div[ @class="s12604"]/span[@class="s120 s1479"]')
-  #types = driver.find_elements(By.XPATH, '//*div[ @class="s12604"]')
   types = driver.find_elements(By.XPATH, '//div[ @class="s12604"]')
-  times = driver.find_elements(By.XPATH, '//div[ @class="s120 s1479"]')
-  
-  #alltime = zip(types, times)
-  #print(alltime)
-  print(times)
 
-  prep = []
-  cook = []
-  othertime = []
   for type in types:
-    print(type.text)
-    for time in times:
-      
-      print(time.text)
-      if type.text =='Prep:':
-        prep.append(time.text)
-      elif type.text == 'Cook:':
-        cook.append(time.text)
-      else: 
-        othertime.append(type.text + ' ' + time.text)
-  print(prep)
-  print(cook)
-  print(othertime)
-  all = zip(prep, cook, othertime)
-  print(all)
+    time_amount = type.text.split('\n')[1]
+    if 'Prep' in type.text:
+      conn.execute('''UPDATE recipe SET prep_time = ? WHERE whisk_url = ?''', (time_amount, whisk_url))
+    elif 'Cook' in type.text:
+      conn.execute('''UPDATE recipe SET cook_time = ? WHERE whisk_url = ?''', (time_amount, whisk_url))
+    else: 
+      print('not found')
+  conn.commit()
   
 conn.close()
 
