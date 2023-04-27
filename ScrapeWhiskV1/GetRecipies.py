@@ -214,7 +214,7 @@ for whisk_url in whisk_urls:
   #close the overlay window by clicking
   large_image.click()
 
-  #get and match ingredient image
+  #need to get and match ingredient image
 
 conn.close()
 
