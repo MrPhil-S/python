@@ -7,6 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 import sqlite3
+import urllib
 import whisk_secrets
 
 
@@ -20,21 +21,31 @@ cursor = conn.cursor()
 cursor.execute('DROP TABLE IF EXISTS recipe')
 #cursor.execute('CREATE TABLE recipe (id TEXT PRIMARY KEY, title TEXT)')
 cursor.execute('''CREATE TABLE recipe (
+      recipe_id INTEGER PRIMARY KEY,
       title TEXT,
-      whisk_url TEXT,
+      whisk_url TEXT UNIQUE,
       source_url TEXT,
-      ingredient_count INT, 
+      ingredient_count INTEGER, 
       total_time TEXT,
       prep_time TEXT,
       cook_time TEXT)''')
 
+cursor.execute('DROP TABLE IF EXISTS recipe_ingredient')
+
+cursor.execute('''CREATE TABLE recipe_ingredient (
+      recipe_ingredient_id INTEGER PRIMARY KEY,
+      recipe_id INTEGER,
+      ingredient_id INTEGER,
+      ingredient_written TEXT,
+      ingredient_note TEXT)''')
+
+
 # query the database
-cursor.execute('SELECT * FROM recipe')
+#cursor.execute('SELECT * FROM recipe')
 
 # print the results
-for row in cursor.fetchall():
-    print(row)
-
+#for row in cursor.fetchall():
+#    print(row)
 
 url =  'https://my.whisk.com/recipes'
 email =  whisk_secrets.email
@@ -51,11 +62,9 @@ username_field = wait.until(EC.presence_of_element_located((By.NAME, 'username')
 
 # enter the email and click continue
 username_field.send_keys(email)
-
 username_field.send_keys(Keys.ENTER)
 
 #wait 30s unitl password field present
-
 element = WebDriverWait(driver, 30).until(
 	EC.presence_of_element_located((By.ID, "_input-3"))
 )
@@ -79,17 +88,19 @@ while x > 1:
 print(f'{x} seconds left, continuing...')
 
 #scroll to bottom of cards
-last_height = driver.execute_script("return document.body.scrollHeight")
-while True:
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    sleep(2)
-    new_height = driver.execute_script("return document.body.scrollHeight")
-    if new_height == last_height:
-        break
-    last_height = new_height
+def scroll_to_bottom():
+  last_height = driver.execute_script("return document.body.scrollHeight")
+  while True:
+      driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+      sleep(2)
+      new_height = driver.execute_script("return document.body.scrollHeight")
+      if new_height == last_height:
+          break
+      last_height = new_height
+#scroll_to_bottom()
 
 #get Whisk recipe page URLs
-card_urls = []
+whisk_urls = []
 card_headers_objs = driver.find_elements(By.XPATH, '//a[ contains(@class, "s189")]')  
 for card_headers_obj in card_headers_objs:
   card_headers = card_headers_obj.text
@@ -106,7 +117,6 @@ for card_headers_obj in card_headers_objs:
   except:
     ingredient_count = None
   
-  
   try:
     total_time = card_headers.split('\n')[2]
     matches = ['h ', "min"]
@@ -117,28 +127,29 @@ for card_headers_obj in card_headers_objs:
   except:
     total_time = None
 
-  url = card_headers_obj.get_attribute("href")
-  url =  url.split('?')[0]
-  card_urls.append(url)
+  whisk_url = card_headers_obj.get_attribute("href")
+  whisk_url =  whisk_url.split('?')[0]
+  whisk_urls.append(whisk_url)
 
-  data = [title, url, ingredient_count, total_time]
+  data = [title, whisk_url, ingredient_count, total_time]
   insert_statement = 'INSERT INTO recipe (title, whisk_url, ingredient_count, total_time) VALUES (?, ?, ?, ?)'
   conn.execute(insert_statement, data)
   
 conn.commit()
 
-total_recipes = len(card_urls)
+total_recipes = len(whisk_urls)
 print(f'{total_recipes} URLs found ')
 #TESTING - limite the amount
-#card_urls = card_urls[:30]
+#whisk_urls = whisk_urls[:30]
 
-#for each Whisk page, navigate within and get the souce URL
+####for each Whisk page, navigate within and scrape
 source_url_count = 0
 source_urls = []
-for whisk_url in card_urls:
+for whisk_url in whisk_urls:
   driver.get(whisk_url)
   random_sleep = random.uniform(1.5, 3)
   sleep(random_sleep)
+  #get source URL
   find_href = driver.find_elements(By.XPATH, '//a[ contains(@class, "s321")]')  
   if len(find_href) > 0:
     for source_url in find_href:
@@ -152,13 +163,15 @@ for whisk_url in card_urls:
 
       source_urls.append(source_url)
 
+
+    #Prints progress status
     source_url_count += 1
     print(f'{int((source_url_count/total_recipes)*100)}% complete. (Remaining source urls obtained: {total_recipes - source_url_count} of {total_recipes}))')
   else:
     source_urls.append("Not Found")
    
+  #get cooking time
   types = driver.find_elements(By.XPATH, '//div[ @class="s12604"]')
-
   for type in types:
     time_amount = type.text.split('\n')[1]
     if 'Prep' in type.text:
@@ -169,6 +182,40 @@ for whisk_url in card_urls:
       print('not found')
   conn.commit()
   
+
+  #get ingredients
+  cursor.execute('''SELECT recipe_id from recipe WHERE whisk_url = ?''', (whisk_url,))
+  current_recipe = cursor.fetchone()
+  current_recipe_id = current_recipe[0]
+
+  ingredients = driver.find_elements(By.XPATH, '//span[ @data-testid="recipe-ingredient"]')
+  for ingredient in ingredients:
+    
+    ingredient_written = ingredient.text.split('\n')[0]
+    try:
+      ingredient_note = ingredient.text.split('\n')[1]
+    except:
+      ingredient_note = None
+    ingredient_data = [current_recipe_id, ingredient_written, ingredient_note ]
+    insert_statement = '''INSERT INTO recipe_ingredient (recipe_id, ingredient_written, ingredient_note ) VALUES (?, ?, ?)'''
+    conn.execute(insert_statement, ingredient_data)
+  conn.commit()
+
+  #click on image to expand
+  image = driver.find_element("xpath", '//img[ contains(@class, "s321")]')
+  image.click()
+  sleep(2)
+  #open file in write and binary mode
+  with open(f'images//{current_recipe_id}.jpg', 'wb') as file:
+  #identify image to be captured
+    large_image = driver.find_element('xpath', '//img[ contains(@class, "s11933")]')
+    #write file
+    file.write(large_image.screenshot_as_png)
+  #close the overlay window by clicking
+  large_image.click()
+
+  #get and match ingredient image
+
 conn.close()
 
 #driver.quit()
