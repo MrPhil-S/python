@@ -1,14 +1,16 @@
+import os
 import re
 import random
+import sqlite3
+import urllib
+import whisk_secrets
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-import sqlite3
-import urllib
-import whisk_secrets
+
 
 
 
@@ -25,10 +27,12 @@ cursor.execute('''CREATE TABLE recipe (
       title TEXT,
       whisk_url TEXT UNIQUE,
       source_url TEXT,
+      source_url_short TEXT,
       ingredient_count INTEGER, 
       total_time TEXT,
       prep_time TEXT,
-      cook_time TEXT)''')
+      cook_time TEXT,
+      servings INTEGER)''')
 
 cursor.execute('DROP TABLE IF EXISTS recipe_ingredient')
 
@@ -150,6 +154,7 @@ for whisk_url in whisk_urls:
   driver.get(whisk_url)
   random_sleep = random.uniform(1.5, 3)
   sleep(random_sleep)
+  
   #get source URL
   find_href = driver.find_elements(By.XPATH, '//a[ contains(@class, "s321")]')  
   if len(find_href) > 0:
@@ -161,9 +166,7 @@ for whisk_url in whisk_urls:
         source_url = driver.current_url
       conn.execute('''UPDATE recipe SET source_url = ? WHERE whisk_url = ?''', (source_url, whisk_url))
       conn.commit()
-
       source_urls.append(source_url)
-
 
     #Prints progress status
     source_url_count += 1
@@ -183,19 +186,40 @@ for whisk_url in whisk_urls:
       print('not found')
   conn.commit()
   
+  #get serving count
+  try:
+    servings = driver.find_element(By.CLASS_NAME, "s11293")
+  except:
+    servings = driver.find_element(By.CLASS_NAME, "s11731")
+  servings = servings.text.split(' ')[0]
+  conn.execute('''UPDATE recipe SET servings = ? WHERE whisk_url = ?''', (servings, whisk_url))
 
-  #get ingredients
+  #get serving count
+  source_url_short = driver.find_element('xpath', '//img[ contains(@class, "s12682")]')
+  conn.execute('''UPDATE recipe SET source_url_short = ? WHERE whisk_url = ?''', (source_url_short.text, whisk_url))
+
+  
+
+
+  #get recipe ID to be used for ingredient table FK
   cursor.execute('''SELECT recipe_id from recipe WHERE whisk_url = ?''', (whisk_url,))
   current_recipe = cursor.fetchone()
   current_recipe_id = current_recipe[0]
 
-
-
   #get ingredients
   ingredient_parents = driver.find_elements(By.XPATH, '//a[contains (@class, "s12691")]')
   for ingredient_parent in ingredient_parents:
-      #get the official raw name  
+      #get the official raw name and store image 
       ingredient_name = ingredient_parent.get_attribute("href").replace('https://my.whisk.com/ingredients/','')
+      if os.path.exists (f'ingredient_images//{ingredient_name}.jpg'):
+        pass
+      else:
+        with open(f'ingredient_images//{ingredient_name}.jpg', 'wb') as file:
+          #identify image to be captured
+          ingredient_image = ingredient_parent.find_element('xpath', './/img[ contains(@class, "s12682")]')
+          #write file
+          file.write(ingredient_image.screenshot_as_png)
+               
       #get the ingredient, quantity and note from the UI
       ingredient_full = ingredient_parent.find_element("xpath", './/span[ @data-testid="recipe-ingredient"]') 
 
