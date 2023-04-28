@@ -37,7 +37,8 @@ cursor.execute('''CREATE TABLE recipe_ingredient (
       recipe_id INTEGER,
       ingredient_id INTEGER,
       ingredient_written TEXT,
-      ingredient_note TEXT)''')
+      ingredient_note TEXT,
+      ingredient_name TEXT)''')
 
 
 # query the database
@@ -171,7 +172,7 @@ for whisk_url in whisk_urls:
     source_urls.append("Not Found")
    
   #get cooking time
-  types = driver.find_elements(By.XPATH, '//div[ @class="s12604"]')
+  types = driver.find_elements(By.XPATH, '//div[ @class="s192 s1180"]')
   for type in types:
     time_amount = type.text.split('\n')[1]
     if 'Prep' in type.text:
@@ -188,33 +189,43 @@ for whisk_url in whisk_urls:
   current_recipe = cursor.fetchone()
   current_recipe_id = current_recipe[0]
 
-  ingredients = driver.find_elements(By.XPATH, '//span[ @data-testid="recipe-ingredient"]')
-  for ingredient in ingredients:
-    
-    ingredient_written = ingredient.text.split('\n')[0]
-    try:
-      ingredient_note = ingredient.text.split('\n')[1]
-    except:
-      ingredient_note = None
-    ingredient_data = [current_recipe_id, ingredient_written, ingredient_note ]
-    insert_statement = '''INSERT INTO recipe_ingredient (recipe_id, ingredient_written, ingredient_note ) VALUES (?, ?, ?)'''
-    conn.execute(insert_statement, ingredient_data)
-  conn.commit()
 
-  #click on image to expand
+
+  #get ingredients
+  ingredient_parents = driver.find_elements(By.XPATH, '//a[contains (@class, "s12691")]')
+  for ingredient_parent in ingredient_parents:
+      #get the official raw name  
+      ingredient_name = ingredient_parent.get_attribute("href").replace('https://my.whisk.com/ingredients/','')
+      #get the ingredient, quantity and note from the UI
+      ingredient_full = ingredient_parent.find_element("xpath", './/span[ @data-testid="recipe-ingredient"]') 
+
+      ingredient_written = ingredient_full.text.split('\n')[0]
+      try:  
+        ingredient_note = ingredient_full.text.split('\n')[1]
+      except:
+        ingredient_note = None
+      ingredient_data = [current_recipe_id, ingredient_written, ingredient_note, ingredient_name ]
+      insert_statement = '''INSERT INTO recipe_ingredient (recipe_id, ingredient_written, ingredient_note, ingredient_name ) VALUES (?, ?, ?, ?)'''
+      conn.execute(insert_statement, ingredient_data)
+      conn.commit()
+
+
+  #click on recipe image to expand
   image = driver.find_element("xpath", '//img[ contains(@class, "s321")]')
   image.click()
   sleep(2)
   #open file in write and binary mode
   with open(f'images//{current_recipe_id}.jpg', 'wb') as file:
   #identify image to be captured
-    large_image = driver.find_element('xpath', '//img[ contains(@class, "s11933")]')
+    large_image = driver.find_element('xpath', '//img[ contains(@class, "s11937")]')
     #write file
     file.write(large_image.screenshot_as_png)
   #close the overlay window by clicking
   large_image.click()
 
-  # need to get and match ingredient image
+
+
+
 
 conn.close()
 
