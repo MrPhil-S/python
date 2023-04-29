@@ -61,6 +61,8 @@ PATH = "C:\\projects\\chromedriver.exe"
 driver = webdriver.Chrome(PATH)
 
 driver.get(url)
+driver.maximize_window()
+
 
 wait = WebDriverWait(driver, 10) # wait up to 10 seconds
 username_field = wait.until(EC.presence_of_element_located((By.NAME, 'username')))
@@ -175,50 +177,80 @@ for whisk_url in whisk_urls:
     source_urls.append("Not Found")
    
   #get cooking time
-  types = driver.find_elements(By.XPATH, '//div[ @class="s192 s1180"]')
-  for type in types:
-    time_amount = type.text.split('\n')[1]
-    if 'Prep' in type.text:
-      conn.execute('''UPDATE recipe SET prep_time = ? WHERE whisk_url = ?''', (time_amount, whisk_url))
-    elif 'Cook' in type.text:
-      conn.execute('''UPDATE recipe SET cook_time = ? WHERE whisk_url = ?''', (time_amount, whisk_url))
-    else: 
-      print('not found')
-  conn.commit()
+  cook_prep_times = driver.find_elements(By.XPATH, '//div[ @class="s192 s1180"]')
+  for cook_prep_time in cook_prep_times:
+    cook_prep_time = cook_prep_time.text
+    if cook_prep_time.split('\n')[0] == 'Prep:':
+        prep_time = cook_prep_time.split('\n')[1]
+    else:
+        prep_time = -1
+    if cook_prep_time.split('\n')[2] == 'Cook:':
+        cook_time = cook_prep_time.split('\n')[3]
+    else:
+        cook_time = -1
+    conn.execute('''UPDATE recipe SET prep_time = ?, cook_time = ?  WHERE whisk_url = ?''', (prep_time, cook_time, whisk_url))
+    conn.commit()
   
   #get serving count
   try:
-    servings = driver.find_element(By.CLASS_NAME, "s11293")
+    #if provided
+    servings_elment = driver.find_element(By.CLASS_NAME, "s11293")
+    servings = servings_elment.text.split(' ')[0]
   except:
-    servings = driver.find_element(By.CLASS_NAME, "s11731")
-  servings = servings.text.split(' ')[0]
-  conn.execute('''UPDATE recipe SET servings = ? WHERE whisk_url = ?''', (servings, whisk_url))
-
-  #get serving count
-  source_url_short = driver.find_element('xpath', '//img[ contains(@class, "s12682")]')
-  conn.execute('''UPDATE recipe SET source_url_short = ? WHERE whisk_url = ?''', (source_url_short.text, whisk_url))
-
+    #when no serving count is provided
+    servings = None
   
+  #conn.execute('''UPDATE recipe SET servings = ? WHERE whisk_url = ?''', (servings, whisk_url))
 
+  #get short URL
+  source_url_short = driver.find_element('xpath', '//span[ contains(@class, "s11731")]')
+  conn.execute('''UPDATE recipe SET servings = ?, source_url_short = ? WHERE whisk_url = ?''', (servings, source_url_short.text, whisk_url))
 
   #get recipe ID to be used for ingredient table FK
   cursor.execute('''SELECT recipe_id from recipe WHERE whisk_url = ?''', (whisk_url,))
   current_recipe = cursor.fetchone()
   current_recipe_id = current_recipe[0]
 
+
+  #If recipe image does not already exist, click on recipe image to expand and save to file
+  if os.path.exists (f'recipe_images//{current_recipe_id}.jpg'):
+    pass
+  else:
+    image = driver.find_element("xpath", '//img[ contains(@class, "s321")]')
+    sleep(2)
+    image.click()    
+    sleep(2)
+    #open file in write and binary mode
+    with open(f'recipe_images//{current_recipe_id}.jpg', 'wb') as file:
+    #identify image to be captured
+      
+      large_image = driver.find_element('xpath', '//img[ contains(@class, "s11937")]')
+      #write file
+      file.write(large_image.screenshot_as_png)
+    #close the overlay window by clicking
+    large_image.click()
+
   #get ingredients
+  #element.scrollIntoView({ alignToTop: "True" });
+  first_ingredient = driver.find_element('xpath', '//a[contains (@class, "s12691")]')
+  first_ingredient.location_once_scrolled_into_view
+
   ingredient_parents = driver.find_elements(By.XPATH, '//a[contains (@class, "s12691")]')
   for ingredient_parent in ingredient_parents:
       #get the official raw name and store image 
+      #sleep(.5)
       ingredient_name = ingredient_parent.get_attribute("href").replace('https://my.whisk.com/ingredients/','')
       if os.path.exists (f'ingredient_images//{ingredient_name}.jpg'):
         pass
       else:
         with open(f'ingredient_images//{ingredient_name}.jpg', 'wb') as file:
           #identify image to be captured
-          ingredient_image = ingredient_parent.find_element('xpath', './/img[ contains(@class, "s12682")]')
-          #write file
-          file.write(ingredient_image.screenshot_as_png)
+          try:
+            ingredient_image = ingredient_parent.find_element('xpath', './/img[ contains(@class, "s12682")]')
+            #write file
+            file.write(ingredient_image.screenshot_as_png)
+          except:
+            ingredient_name == '_unknown'
                
       #get the ingredient, quantity and note from the UI
       ingredient_full = ingredient_parent.find_element("xpath", './/span[ @data-testid="recipe-ingredient"]') 
@@ -232,21 +264,6 @@ for whisk_url in whisk_urls:
       insert_statement = '''INSERT INTO recipe_ingredient (recipe_id, ingredient_written, ingredient_note, ingredient_name ) VALUES (?, ?, ?, ?)'''
       conn.execute(insert_statement, ingredient_data)
       conn.commit()
-
-
-  #click on recipe image to expand
-  image = driver.find_element("xpath", '//img[ contains(@class, "s321")]')
-  image.click()
-  sleep(2)
-  #open file in write and binary mode
-  with open(f'images//{current_recipe_id}.jpg', 'wb') as file:
-  #identify image to be captured
-    large_image = driver.find_element('xpath', '//img[ contains(@class, "s11937")]')
-    #write file
-    file.write(large_image.screenshot_as_png)
-  #close the overlay window by clicking
-  large_image.click()
-
 
 
 
