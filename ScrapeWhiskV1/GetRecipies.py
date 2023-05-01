@@ -10,9 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-
-
-
+from ScrapeAR import scrapeAR
 
 conn = sqlite3.connect('whiskdata.db')
 
@@ -32,7 +30,9 @@ cursor.execute('''CREATE TABLE recipe (
       total_time TEXT,
       prep_time TEXT,
       cook_time TEXT,
-      servings INTEGER)''')
+      additional_time, TEXT,
+      servings INTEGER
+      note_from_user TEXT)''')
 
 cursor.execute('DROP TABLE IF EXISTS recipe_ingredient')
 
@@ -44,6 +44,14 @@ cursor.execute('''CREATE TABLE recipe_ingredient (
       ingredient_note TEXT,
       ingredient_name TEXT)''')
 
+# create a table
+cursor.execute('DROP TABLE IF EXISTS recipe_instruction')
+cursor.execute('''CREATE TABLE recipe_instruction (
+      recipe_instruction_id INTEGER PRIMARY KEY,
+      recipe_id INTEGER,
+      text_contents TEXT,
+      type INTEGER,
+      sequence INTEGER)''')
 
 # query the database
 #cursor.execute('SELECT * FROM recipe')
@@ -141,7 +149,8 @@ for card_headers_obj in card_headers_objs:
   data = [title, whisk_url, ingredient_count, total_time]
   insert_statement = 'INSERT INTO recipe (title, whisk_url, ingredient_count, total_time) VALUES (?, ?, ?, ?)'
   conn.execute(insert_statement, data)
-  
+
+
 conn.commit()
 
 total_recipes = len(whisk_urls)
@@ -169,6 +178,8 @@ for whisk_url in whisk_urls:
       conn.execute('''UPDATE recipe SET source_url = ? WHERE whisk_url = ?''', (source_url, whisk_url))
       conn.commit()
       source_urls.append(source_url)
+
+    
 
     #Prints progress status
     source_url_count += 1
@@ -243,14 +254,14 @@ for whisk_url in whisk_urls:
       if os.path.exists (f'ingredient_images//{ingredient_name}.jpg'):
         pass
       else:
-        with open(f'ingredient_images//{ingredient_name}.jpg', 'wb') as file:
-          #identify image to be captured
-          try:
-            ingredient_image = ingredient_parent.find_element('xpath', './/img[ contains(@class, "s12682")]')
-            #write file
+        try:
+          #identify ingredient image to be captured
+          ingredient_image = ingredient_parent.find_element('xpath', './/img[ contains(@class, "s12682")]')
+          #write file
+          with open(f'ingredient_images//{ingredient_name}.jpg', 'wb') as file:
             file.write(ingredient_image.screenshot_as_png)
-          except:
-            ingredient_name == '_unknown'
+        except:
+          ingredient_name == '_unknown'
                
       #get the ingredient, quantity and note from the UI
       ingredient_full = ingredient_parent.find_element("xpath", './/span[ @data-testid="recipe-ingredient"]') 
@@ -265,6 +276,27 @@ for whisk_url in whisk_urls:
       conn.execute(insert_statement, ingredient_data)
       conn.commit()
 
+#for allrecipes, get intructions/notes
+#cursor.execute('SELECT * FROM recipe WHERE source__url like ''https://www.allrecipes.com/%''')
+
+# get the results
+#for row in cursor.fetchall():
+ # ar_url = (row)
+  if 'https://www.allrecipes.com/' in source_url:  
+    all_instructions, notes = scrapeAR(source_url)
+    sequence = 0
+    for instruction in all_instructions:
+      sequence += 1
+      data = [current_recipe_id, instruction, 1, sequence]
+      insert_statement = 'INSERT INTO recipe_instruction (recipe_id, text_contents, type, sequence) VALUES (?, ?, ?, ?)'
+      conn.execute(insert_statement, data)
+    sequence = 0  
+    for note in notes:
+      sequence += 1
+      data = [current_recipe_id, note, 2, sequence]
+      insert_statement = 'INSERT INTO recipe_instruction (recipe_id, text_contents, type sequence) VALUES (?, ?, ?, ?)'
+      conn.execute(insert_statement, data)
+    conn.commit()
 
 
 
